@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">Catálogo de Películas</string>
+
+    <string name="popular_movies_title">Peliculas populares</string>
+    <string name="loading_movies">Cargando peliculas…</string>
+
+    <string name="movie_detail_title">Detalle de la pelicula</string>
+    <string name="back_button">Volver</string>
+    <string name="synopsis_title">Sinopsis</string>
+    <string name="no_synopsis_available">Sin sinopsis disponible.</string>
+    <string name="genres_title">Géneros</string>
+    <!--%1$.1f en rating_label nos permite pasarle un numero con decimales y mostrarlo con un solo decimal / 10 (8.5/10) -->
+    <string name="rating_label">Puntuación: %1$.1f / 10</string>
+
+
+    <string name="error_no_internet">No tenés conexión a internet. Verificá tu red e intentá de nuevo.</string>
+    <string name="error_generic">Ocurrió un error al cargar la información. Por favor, intentá nuevamente.</string>
+    <string name="retry_button">Reintentar</string>
+
+</resources>

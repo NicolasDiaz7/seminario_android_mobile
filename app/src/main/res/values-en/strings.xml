@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+        <string name="app_name">Movie Catalog</string>
+        <!-- Main Screen -->
+        <string name="popular_movies_title">Popular Movies</string>
+        <string name="loading_movies">Loading movies…</string>
+
+        <!-- Detail Screen -->
+        <string name="movie_detail_title">Movie Details</string>
+        <string name="back_button">Back</string>
+        <string name="synopsis_title">Overview</string>
+        <string name="no_synopsis_available">No overview available.</string>
+        <string name="genres_title">Genres</string>
+        <string name="rating_label">Rating: %1$.1f / 10</string>
+
+        <!-- Errors and Retry -->
+        <string name="error_no_internet">No internet connection. Please check your network and try again.</string>
+        <string name="error_generic">An error occurred while loading data. Please try again.</string>
+        <string name="retry_button">Retry</string>
+
+</resources>

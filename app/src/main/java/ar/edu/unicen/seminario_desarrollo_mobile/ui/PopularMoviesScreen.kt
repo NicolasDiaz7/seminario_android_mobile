@@ -1,0 +1,210 @@
+package ar.edu.unicen.seminario_desarrollo_mobile.ui
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import ar.edu.unicen.seminario_desarrollo_mobile.R
+import ar.edu.unicen.seminario_desarrollo_mobile.domain.ErrorType
+import ar.edu.unicen.seminario_desarrollo_mobile.domain.Movie
+import coil.compose.AsyncImage
+
+
+/* El componente TopAppBar esta marcado por goole como experimentalMaterial3api
+* esto significa que en futuras versiones de Material 3 Google podria agregarle
+* o cambiarle algun parametro. Si no ponemos @OptIn(Expe....)
+* Android studio te tira un alerta en TopAppBar como diciendote si estas seguro de
+* utilizar este componente de Material 3*/
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PopularMoviesScreen(
+    viewModel: MainViewModel,
+    onMovieClick: (Int) -> Unit
+) {
+    // Nos "enchufamos" al tubo de datos (StateFlow) del ViewModel
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = stringResource(R.string.popular_movies_title),
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            )
+        }
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            when {
+                // 1. Estado Cargando
+                uiState.isLoading -> {
+                    LoadingView()
+                }
+                // 2. Estado de Error (con botón para reintentar)
+                uiState.error != null -> {
+                    ErrorView(
+                        errorType = uiState.error!!,
+                        onRetry = { viewModel.loadPopularMovies() }
+                    )
+                }
+                // 3. Estado de Éxito: mostramos la lista de películas
+                else -> {
+                    MovieList(
+                        movies = uiState.movies,
+                        onMovieClick = onMovieClick
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun LoadingView() {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        CircularProgressIndicator()
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(text = stringResource(R.string.loading_movies))
+    }
+}
+
+@Composable
+fun ErrorView(
+    errorType: ErrorType,
+    onRetry: () -> Unit
+) {
+    // Elegimos el texto según si se cortó internet o fue otro error (Doble mérito del enunciado)
+    val errorMessage = when (errorType) {
+        ErrorType.NO_INTERNET -> stringResource(R.string.error_no_internet)
+        ErrorType.GENERIC -> stringResource(R.string.error_generic)
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = errorMessage,
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = onRetry) {
+            Text(text = stringResource(R.string.retry_button))
+        }
+    }
+}
+
+@Composable
+private fun MovieList(
+    movies: List<Movie>,
+    onMovieClick: (Int) -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        items(
+            items = movies,
+            key = { movie -> movie.id }
+        ) { movie ->
+            MovieItem(
+                movie = movie,
+                onClick = { onMovieClick(movie.id) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun MovieItem(
+    movie: Movie,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AsyncImage(
+                model = movie.posterUrl,
+                contentDescription = movie.title,
+                modifier = Modifier
+                    .size(width = 80.dp, height = 120.dp)
+                    .clip(RoundedCornerShape(8.dp)),
+                contentScale = ContentScale.Crop
+            )
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Text(
+                text = movie.title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
