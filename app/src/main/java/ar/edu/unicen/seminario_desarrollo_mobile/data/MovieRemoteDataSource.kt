@@ -55,4 +55,26 @@ class MovieRemoteDataSource @Inject constructor(
             }
         }
     }
+
+    suspend fun searchMovies(query: String): DataResult<List<Movie>>{
+        return withContext(Dispatchers.IO){
+            try {
+                val response = movieApi.searchMovies(
+                    query = query,
+                    apiKey = BuildConfig.TMDB_API_KEY
+                )
+                val body = response.body()
+                if (response.isSuccessful && body != null) {
+                    val movies = body.results.map { it.toDomain() }
+                    DataResult.Success(movies)
+                } else {
+                    DataResult.Error(ErrorType.GENERIC)
+                }
+            } catch (e: IOException) {
+                DataResult.Error(ErrorType.NO_INTERNET)
+            } catch (e: Exception) {
+                DataResult.Error(ErrorType.GENERIC)
+            }
+        }
+    }
 }

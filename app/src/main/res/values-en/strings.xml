@@ -18,4 +18,9 @@
         <string name="error_generic">An error occurred while loading data. Please try again.</string>
         <string name="retry_button">Retry</string>
 
+        <!-- Movie Search -->
+        <string name="search_placeholder">Search movie…</string>
+        <string name="clear_search">Clear search</string>
+        <string name="empty_search_results">No results found for your search.</string>
+
 </resources>

@@ -7,6 +7,8 @@ import ar.edu.unicen.seminario_desarrollo_mobile.domain.DataResult
 import ar.edu.unicen.seminario_desarrollo_mobile.domain.ErrorType
 import ar.edu.unicen.seminario_desarrollo_mobile.domain.Movie
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,7 +19,8 @@ import javax.inject.Inject
 data class MoviesUiState(
     val isLoading: Boolean = false,
     val movies: List<Movie> = emptyList(),
-    val error: ErrorType? = null
+    val error: ErrorType? = null,
+    val searchQuery: String = ""
 )
 
 @HiltViewModel
@@ -30,6 +33,8 @@ class MainViewModel @Inject constructor(
 
     // uiState es público pero de solo lectura (la pantalla Compose lo observa desde acá)
     val uiState: StateFlow<MoviesUiState> = _uiState.asStateFlow()
+
+    private var searchJob: Job? = null
 
     init {
         // Apenas se crea el ViewModel, cargamos las películas populares automáticamente
@@ -64,4 +69,52 @@ class MainViewModel @Inject constructor(
             }
         }
     }
+
+    fun onSearchQueryChange(newQuery: String) {
+        _uiState.value = _uiState.value.copy(searchQuery = newQuery)
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            if (newQuery.isBlank()) {
+                loadPopularMovies()
+            } else {
+                searchJob = viewModelScope.launch {
+                    delay(500)
+                    searchMovies(newQuery.trim())
+                }
+            }
+        }
+    }
+
+    private suspend fun searchMovies(query: String) {
+        _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+
+        when (val result = movieRepository.searchMovies(query)){
+            is DataResult.Success -> {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    movies = result.data,
+                    error = null
+                )
+            }
+            is DataResult.Error -> {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = result.errorType
+                )
+            }
+        }
+    }
+
+    fun retry() {
+        val currentQuery = _uiState.value.searchQuery
+        if (currentQuery.isBlank()) {
+            loadPopularMovies()
+        } else {
+            searchJob?.cancel()
+            searchJob = viewModelScope.launch {
+                searchMovies(currentQuery.trim())
+            }
+        }
+    }
+
 }

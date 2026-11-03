@@ -16,4 +16,8 @@ class MovieRepository @Inject constructor(
     suspend fun getMovieDetail(movieId: Int): DataResult<MovieDetail> {
         return remoteDataSource.getMovieDetail(movieId)
     }
+
+    suspend fun searchMovies(query: String): DataResult<List<Movie>>{
+        return remoteDataSource.searchMovies(query)
+    }
 }

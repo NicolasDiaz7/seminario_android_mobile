@@ -21,4 +21,11 @@ interface MovieApi {
         @Query("api_key") apiKey: String,
         @Query("language") language: String = "es-ES"
     ): Response<MovieDetailDto>
+
+    @GET("search/movie")
+    suspend fun searchMovies(
+        @Query("query") query: String,
+        @Query("api_key") apiKey: String,
+        @Query("language") language: String = "es-ES"
+    ): Response<MovieListResponseDto>
 }

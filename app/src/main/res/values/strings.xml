@@ -17,4 +17,9 @@
     <string name="error_generic">Ocurrió un error al cargar la información. Por favor, intentá nuevamente.</string>
     <string name="retry_button">Reintentar</string>
 
+    <!-- Busqueda de peliculas -->
+    <string name="search_placeholder">Buscar película…</string>
+    <string name="clear_search">Limpiar búsqueda</string>
+    <string name="empty_search_results">No hay resultados para la búsqueda.</string>
+
 </resources>
