@@ -22,4 +22,12 @@
     <string name="clear_search">Limpiar búsqueda</string>
     <string name="empty_search_results">No hay resultados para la búsqueda.</string>
 
+    <!-- Lista de deseados -->
+    <string name="tab_favorites">Favoritos</string>
+    <string name="empty_list_message">Todavia no agregaste peliculas a tu lista de deseados</string>
+    <string name="add_to_favorites">Agregar a favoritos</string>
+    <string name="remove_from_favorites">Quitar de favoritos</string>"
+
+    <!-- Lista de peliculas populares -->
+    <string name="tab_popular_movies">Populares</string>"
 </resources>

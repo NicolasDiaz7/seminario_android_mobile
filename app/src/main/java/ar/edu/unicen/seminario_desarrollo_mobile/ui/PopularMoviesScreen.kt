@@ -29,6 +29,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Tab
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -61,7 +63,7 @@ fun PopularMoviesScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = stringResource(R.string.popular_movies_title),
+                        text = stringResource(R.string.app_name),
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -77,30 +79,57 @@ fun PopularMoviesScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // Barra de búsqueda arriba de la lista
-            MovieSearchBar(
-                query = uiState.searchQuery,
-                onQueryChange = { newText -> viewModel.onSearchQueryChange(newText) }
-            )
+            // Pestañas (Tabs): 0 = Populares, 1 = Lista de deseados
+            PrimaryTabRow(selectedTabIndex = uiState.selectedTabIndex) {
+                Tab(
+                    selected = uiState.selectedTabIndex == 0,
+                    onClick = { viewModel.onTabSelected(0) },
+                    text = { Text(text = stringResource(R.string.tab_popular_movies)) }
+                )
+                Tab(
+                    selected = uiState.selectedTabIndex == 1,
+                    onClick = { viewModel.onTabSelected(1) },
+                    text = { Text(text = stringResource(R.string.tab_favorites)) }
+                )
+            }
 
-            // Contenido debajo de la barra de busqueda
-            Box(modifier = Modifier.fillMaxSize()) {
-                when {
-                    uiState.isLoading -> {
-                        LoadingView()
+            if (uiState.selectedTabIndex == 0) {
+                // Pestaña 0: Películas Populares + Buscador
+                MovieSearchBar(
+                    query = uiState.searchQuery,
+                    onQueryChange = { newText -> viewModel.onSearchQueryChange(newText) }
+                )
+
+                Box(modifier = Modifier.fillMaxSize()) {
+                    when {
+                        uiState.isLoading -> {
+                            LoadingView()
+                        }
+                        uiState.error != null -> {
+                            ErrorView(
+                                errorType = uiState.error!!,
+                                onRetry = { viewModel.retry() }
+                            )
+                        }
+                        uiState.movies.isEmpty() -> {
+                            EmptyMessageView(message = stringResource(R.string.empty_search_results))
+                        }
+                        else -> {
+                            MovieList(
+                                movies = uiState.movies,
+                                onMovieClick = onMovieClick
+                            )
+                        }
                     }
-                    uiState.error != null -> {
-                        ErrorView(
-                            errorType = uiState.error!!,
-                            onRetry = { viewModel.retry() }
-                        )
-                    }
-                    uiState.movies.isEmpty() -> {
-                        EmptySearchResultsView()
-                    }
-                    else -> {
+                }
+            } else {
+                // Pestaña 1: Lista de Deseados (guardada en Room)
+                Box(modifier = Modifier.fillMaxSize()) {
+                    if (uiState.wishlistMovies.isEmpty()) {
+                        EmptyMessageView(message = stringResource(R.string.empty_list_message))
+                    } else {
                         MovieList(
-                            movies = uiState.movies,
+                            movies = uiState.wishlistMovies,
                             onMovieClick = onMovieClick
                         )
                     }
@@ -131,7 +160,6 @@ private fun MovieSearchBar(
             )
         },
         trailingIcon = {
-            // Solo mostramos el botón "X" para borrar si hay texto escrito
             if (query.isNotEmpty()) {
                 IconButton(onClick = { onQueryChange("") }) {
                     Icon(
@@ -147,7 +175,7 @@ private fun MovieSearchBar(
 }
 
 @Composable
-private fun EmptySearchResultsView() {
+private fun EmptyMessageView(message: String) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -155,7 +183,7 @@ private fun EmptySearchResultsView() {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = stringResource(R.string.empty_search_results),
+            text = message,
             style = MaterialTheme.typography.titleMedium,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onBackground
@@ -181,7 +209,6 @@ fun ErrorView(
     errorType: ErrorType,
     onRetry: () -> Unit
 ) {
-    // Elegimos el texto según si se cortó internet o fue otro error (Doble mérito del enunciado)
     val errorMessage = when (errorType) {
         ErrorType.NO_INTERNET -> stringResource(R.string.error_no_internet)
         ErrorType.GENERIC -> stringResource(R.string.error_generic)

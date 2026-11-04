@@ -17,7 +17,8 @@ import javax.inject.Inject
 data class MovieDetailUiState(
     val isLoading: Boolean = false,
     val movie: MovieDetail? = null,
-    val error: ErrorType? = null
+    val error: ErrorType? = null,
+    val isInWishlist: Boolean = false
 )
 
 @HiltViewModel
@@ -35,21 +36,40 @@ class MovieDetailViewModel @Inject constructor(
                 error = null
             )
 
+            val inWishlist = movieRepository.isMovieInWishlist(movieId)
+
             when (val result = movieRepository.getMovieDetail(movieId)) {
                 is DataResult.Success -> {
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         movie = result.data,
-                        error = null
+                        error = null,
+                        isInWishlist = inWishlist
                     )
                 }
                 is DataResult.Error -> {
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        error = result.errorType
+                        error = result.errorType,
+                        isInWishlist = inWishlist
                     )
                 }
             }
         }
     }
+
+    fun toggleWishlist() {
+        val currentMovie = _uiState.value.movie ?: return
+        val currentlyInWishlist = _uiState.value.isInWishlist
+        viewModelScope.launch {
+            if (currentlyInWishlist) {
+                movieRepository.removeFromWishlist(currentMovie.id)
+                _uiState.value = _uiState.value.copy(isInWishlist = false)
+            } else {
+                movieRepository.addToWishlist(currentMovie)
+                _uiState.value = _uiState.value.copy(isInWishlist = true)
+            }
+        }
+    }
+
 }

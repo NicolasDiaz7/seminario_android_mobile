@@ -20,7 +20,9 @@ data class MoviesUiState(
     val isLoading: Boolean = false,
     val movies: List<Movie> = emptyList(),
     val error: ErrorType? = null,
-    val searchQuery: String = ""
+    val searchQuery: String = "",
+    val wishlistMovies: List<Movie> = emptyList(),
+    val selectedTabIndex: Int = 0
 )
 
 @HiltViewModel
@@ -39,6 +41,17 @@ class MainViewModel @Inject constructor(
     init {
         // Apenas se crea el ViewModel, cargamos las películas populares automáticamente
         loadPopularMovies()
+        observeWishlist()
+    }
+    private fun observeWishlist() {
+        viewModelScope.launch {
+            movieRepository.getWishlistMovies().collect { wishlist ->
+                _uiState.value = _uiState.value.copy(wishlistMovies = wishlist)
+            }
+        }
+    }
+    fun onTabSelected(index: Int) {
+        _uiState.value = _uiState.value.copy(selectedTabIndex = index)
     }
 
     fun loadPopularMovies() {
@@ -49,7 +62,7 @@ class MainViewModel @Inject constructor(
                 error = null
             )
 
-            // 2. Llamamos al repositorio (se suspende acá mientras va a TMDB en el hilo IO)
+            // 2. Llamamos al repositorio (se suspende aca mientras va a TMDB en el hilo IO)
             when (val result = movieRepository.getPopularMovies()) {
                 is DataResult.Success -> {
                     // 3a. Si salió bien: apagamos la carga y guardamos las películas

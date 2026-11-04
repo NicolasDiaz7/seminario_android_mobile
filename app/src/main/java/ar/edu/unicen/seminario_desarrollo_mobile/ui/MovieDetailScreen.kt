@@ -14,11 +14,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -78,18 +82,20 @@ fun MovieDetailScreen(
         ) {
             when {
                 uiState.isLoading -> {
-                    // Reutilizamos el mismo LoadingView de PopularMoviesScreen
                     LoadingView()
                 }
                 uiState.error != null -> {
-                    // Reutilizamos el mismo ErrorView pasándole el reintento con este movieId
                     ErrorView(
                         errorType = uiState.error!!,
                         onRetry = { viewModel.loadMovieDetail(movieId) }
                     )
                 }
                 uiState.movie != null -> {
-                    MovieDetailContent(movie = uiState.movie!!)
+                    MovieDetailContent(
+                        movie = uiState.movie!!,
+                        isInWishlist = uiState.isInWishlist,
+                        onWishlistToggle = { viewModel.toggleWishlist() }
+                    )
                 }
             }
         }
@@ -97,11 +103,15 @@ fun MovieDetailScreen(
 }
 
 @Composable
-private fun MovieDetailContent(movie: MovieDetail) {
+private fun MovieDetailContent(
+    movie: MovieDetail,
+    isInWishlist: Boolean,
+    onWishlistToggle: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState()) // Permite hacer scroll si la sinopsis es larga o el celu está horizontal
+            .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
         // 1. Portada de la película centrada
@@ -142,6 +152,36 @@ private fun MovieDetailContent(movie: MovieDetail) {
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onBackground
             )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Botón para Agregar / Quitar de la Lista de Deseados
+        if (isInWishlist) {
+            OutlinedButton(
+                onClick = onWishlistToggle,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Favorite,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = stringResource(R.string.remove_from_favorites))
+            }
+        } else {
+            Button(
+                onClick = onWishlistToggle,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.FavoriteBorder,
+                    contentDescription = null
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = stringResource(R.string.add_to_favorites))
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
