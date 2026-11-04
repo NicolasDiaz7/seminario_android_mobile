@@ -49,6 +49,11 @@ import ar.edu.unicen.seminario_desarrollo_mobile.R
 import ar.edu.unicen.seminario_desarrollo_mobile.domain.ErrorType
 import ar.edu.unicen.seminario_desarrollo_mobile.domain.Movie
 import coil.compose.AsyncImage
+import android.content.res.Configuration
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.ui.platform.LocalConfiguration
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -238,10 +243,15 @@ private fun MovieList(
     movies: List<Movie>,
     onMovieClick: (Int) -> Unit
 ) {
-    LazyColumn(
+    val configuration = LocalConfiguration.current
+    val columns = if (configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) 2 else 1
+
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(columns),
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         items(
             items = movies,

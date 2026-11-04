@@ -43,7 +43,9 @@ data class MovieDetailDto(
     @SerializedName("genres")
     val genres: List<GenreDto>?,
     @SerializedName("vote_average")
-    val voteAverage: Double?
+    val voteAverage: Double?,
+    @SerializedName("homepage")
+    val homepage: String?
 ) {
     fun toDomain(): MovieDetail {
         return MovieDetail(
@@ -52,9 +54,9 @@ data class MovieDetailDto(
             posterUrl = posterPath?.let { BuildConfig.TMDB_IMAGE_BASE_URL + it },
             overview = overview ?: "",
             genres = genres?.map { it.name } ?: emptyList(),
-            rating = voteAverage ?: 0.0
+            rating = voteAverage ?: 0.0,
+            homepage = homepage?.takeIf {it.isNotBlank()}
         )
-
     }
 }
 

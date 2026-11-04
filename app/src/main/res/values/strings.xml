@@ -30,4 +30,9 @@
 
     <!-- Lista de peliculas populares -->
     <string name="tab_popular_movies">Populares</string>"
+
+    <!-- Interacción con otras apps -->
+    <string name="share_movie">Compartir película</string>
+    <string name="open_homepage">Sitio web oficial</string>
+    <string name="share_movie_message">¡Mirá esta película! %1$s\n\n%2$s</string>
 </resources>

@@ -30,6 +30,11 @@
         <string name="remove_from_favorites">Remove from favorites</string>
 
         <!-- Popular Movies List -->
-        <string name="tab_popular_movies">Popular</string>"
+        <string name="tab_popular_movies">Popular</string>
+
+        <!-- Interaction with other apps -->
+        <string name="share_movie">Share movie</string>
+        <string name="open_homepage">Official website</string>
+        <string name="share_movie_message">Check out this movie! %1$s\n\n%2$s</string>
 
 </resources>

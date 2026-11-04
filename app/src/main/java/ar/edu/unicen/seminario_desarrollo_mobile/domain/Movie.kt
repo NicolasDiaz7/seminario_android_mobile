@@ -12,5 +12,6 @@ data class MovieDetail(
     val posterUrl: String?,
     val overview: String,
     val genres: List<String>,
-    val rating: Double
+    val rating: Double,
+    val homepage: String?
 )
