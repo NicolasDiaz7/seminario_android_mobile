@@ -13,8 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
@@ -54,6 +52,9 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.runtime.LaunchedEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -122,7 +123,9 @@ fun PopularMoviesScreen(
                         else -> {
                             MovieList(
                                 movies = uiState.movies,
-                                onMovieClick = onMovieClick
+                                onMovieClick = onMovieClick,
+                                isLoadingNextPage = uiState.isLoadingNextPage,
+                                onLoadNextPage = { viewModel.loadNextPage() }
                             )
                         }
                     }
@@ -241,7 +244,9 @@ fun ErrorView(
 @Composable
 private fun MovieList(
     movies: List<Movie>,
-    onMovieClick: (Int) -> Unit
+    onMovieClick: (Int) -> Unit,
+    isLoadingNextPage: Boolean = false,
+    onLoadNextPage: (() -> Unit)? = null
 ) {
     val configuration = LocalConfiguration.current
     val columns = if (configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) 2 else 1
@@ -253,14 +258,33 @@ private fun MovieList(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        items(
+        itemsIndexed(
             items = movies,
-            key = { movie -> movie.id }
-        ) { movie ->
+            key = { _, movie -> movie.id }
+        ) { index, movie ->
+            if (index >= movies.lastIndex - 2 && onLoadNextPage != null) {
+                LaunchedEffect(movies.size) {
+                    onLoadNextPage()
+                }
+            }
+
             MovieItem(
                 movie = movie,
                 onClick = { onMovieClick(movie.id) }
             )
+        }
+
+        if (isLoadingNextPage) {
+            item(span = { GridItemSpan(columns) }) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
         }
     }
 }

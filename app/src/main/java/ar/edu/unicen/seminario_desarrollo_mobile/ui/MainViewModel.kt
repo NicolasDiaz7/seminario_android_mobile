@@ -18,6 +18,7 @@ import javax.inject.Inject
 // Representa la "foto" del estado actual de la Pantalla Principal
 data class MoviesUiState(
     val isLoading: Boolean = false,
+    val isLoadingNextPage: Boolean = false,
     val movies: List<Movie> = emptyList(),
     val error: ErrorType? = null,
     val searchQuery: String = "",
@@ -30,19 +31,17 @@ class MainViewModel @Inject constructor(
     private val movieRepository: MovieRepository
 ) : ViewModel() {
 
-    // _uiState es privado y modificable (solo el ViewModel puede cambiarlo)
     private val _uiState = MutableStateFlow(MoviesUiState())
-
-    // uiState es público pero de solo lectura (la pantalla Compose lo observa desde acá)
     val uiState: StateFlow<MoviesUiState> = _uiState.asStateFlow()
 
     private var searchJob: Job? = null
+    private var currentPage: Int = 1
 
     init {
-        // Apenas se crea el ViewModel, cargamos las películas populares automáticamente
         loadPopularMovies()
         observeWishlist()
     }
+
     private fun observeWishlist() {
         viewModelScope.launch {
             movieRepository.getWishlistMovies().collect { wishlist ->
@@ -50,22 +49,21 @@ class MainViewModel @Inject constructor(
             }
         }
     }
+
     fun onTabSelected(index: Int) {
         _uiState.value = _uiState.value.copy(selectedTabIndex = index)
     }
 
     fun loadPopularMovies() {
+        currentPage = 1
         viewModelScope.launch {
-            // 1. Activamos el indicador de carga y limpiamos errores previos
             _uiState.value = _uiState.value.copy(
                 isLoading = true,
                 error = null
             )
 
-            // 2. Llamamos al repositorio (se suspende aca mientras va a TMDB en el hilo IO)
-            when (val result = movieRepository.getPopularMovies()) {
+            when (val result = movieRepository.getPopularMovies(page = currentPage)) {
                 is DataResult.Success -> {
-                    // 3a. Si salió bien: apagamos la carga y guardamos las películas
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         movies = result.data,
@@ -73,7 +71,6 @@ class MainViewModel @Inject constructor(
                     )
                 }
                 is DataResult.Error -> {
-                    // 3b. Si falló: apagamos la carga y guardamos qué tipo de error fue
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         error = result.errorType
@@ -83,17 +80,44 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    // Carga la página siguiente cuando el usuario llega al final de la lista de populares
+    fun loadNextPage() {
+        val state = _uiState.value
+        // Solo paginamos si no estamos buscando, no estamos ya cargando y no hay error
+        if (state.searchQuery.isNotBlank() || state.isLoading || state.isLoadingNextPage || state.error != null) {
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoadingNextPage = true)
+            val nextPage = currentPage + 1
+
+            when (val result = movieRepository.getPopularMovies(page = nextPage)) {
+                is DataResult.Success -> {
+                    currentPage = nextPage
+                    // Sumamos las películas de la nueva página debajo de las anteriores
+                    val updatedMovies = (_uiState.value.movies + result.data).distinctBy { it.id }
+                    _uiState.value = _uiState.value.copy(
+                        isLoadingNextPage = false,
+                        movies = updatedMovies
+                    )
+                }
+                is DataResult.Error -> {
+                    _uiState.value = _uiState.value.copy(isLoadingNextPage = false)
+                }
+            }
+        }
+    }
+
     fun onSearchQueryChange(newQuery: String) {
         _uiState.value = _uiState.value.copy(searchQuery = newQuery)
         searchJob?.cancel()
-        searchJob = viewModelScope.launch {
-            if (newQuery.isBlank()) {
-                loadPopularMovies()
-            } else {
-                searchJob = viewModelScope.launch {
-                    delay(500)
-                    searchMovies(newQuery.trim())
-                }
+        if (newQuery.isBlank()) {
+            loadPopularMovies()
+        } else {
+            searchJob = viewModelScope.launch {
+                delay(500)
+                searchMovies(newQuery.trim())
             }
         }
     }
@@ -101,7 +125,7 @@ class MainViewModel @Inject constructor(
     private suspend fun searchMovies(query: String) {
         _uiState.value = _uiState.value.copy(isLoading = true, error = null)
 
-        when (val result = movieRepository.searchMovies(query)){
+        when (val result = movieRepository.searchMovies(query)) {
             is DataResult.Success -> {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
@@ -129,5 +153,4 @@ class MainViewModel @Inject constructor(
             }
         }
     }
-
 }

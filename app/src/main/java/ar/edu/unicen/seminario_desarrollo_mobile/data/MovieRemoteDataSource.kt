@@ -14,11 +14,12 @@ class MovieRemoteDataSource @Inject constructor(
     private val movieApi: MovieApi
 ) {
 
-    suspend fun getPopularMovies(): DataResult<List<Movie>> {
+    suspend fun getPopularMovies(page: Int = 1): DataResult<List<Movie>> {
         return withContext(Dispatchers.IO) {
             try {
                 val response = movieApi.getPopularMovies(
-                    apiKey = BuildConfig.TMDB_API_KEY
+                    apiKey = BuildConfig.TMDB_API_KEY,
+                    page = page
                 )
                 val body = response.body()
                 if (response.isSuccessful && body != null) {

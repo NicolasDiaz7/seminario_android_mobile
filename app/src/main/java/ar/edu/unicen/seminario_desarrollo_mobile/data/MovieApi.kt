@@ -12,7 +12,8 @@ interface MovieApi {
     @GET("movie/popular")
     suspend fun getPopularMovies(
         @Query("api_key") apiKey: String,
-        @Query("language") language: String = "es-ES"
+        @Query("language") language: String = "es-ES",
+        @Query("page") page: Int = 1
     ): Response<MovieListResponseDto>
 
     @GET("movie/{movie_id}")

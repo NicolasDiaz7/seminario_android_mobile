@@ -11,8 +11,8 @@ class MovieRepository @Inject constructor(
     private val localDataSource: MovieLocalDataSource
 ) {
 
-    suspend fun getPopularMovies(): DataResult<List<Movie>> {
-        return remoteDataSource.getPopularMovies()
+    suspend fun getPopularMovies(page: Int = 1): DataResult<List<Movie>> {
+        return remoteDataSource.getPopularMovies(page)
     }
 
     suspend fun getMovieDetail(movieId: Int): DataResult<MovieDetail> {
